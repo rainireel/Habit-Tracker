@@ -1,0 +1,8 @@
+{
+  "name": "HABIT TRACKER",
+  "description": "Gamified aesthetic dark-mode habit tracker and 1-click Google Apps Script generator for Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

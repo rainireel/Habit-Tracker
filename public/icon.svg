@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181a20" />
+      <stop offset="100%" stop-color="#0f1115" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" stroke="#2a2e37" stroke-width="8" />
+
+  <!-- Soft glow circle -->
+  <circle cx="256" cy="256" r="180" fill="url(#glowGrad)" />
+
+  <!-- Sheet Grid Graphic -->
+  <g transform="translate(106, 106)">
+    <!-- Main board -->
+    <rect x="0" y="0" width="300" height="300" rx="36" fill="#14171d" stroke="#2a2e37" stroke-width="6" />
+
+    <!-- Top header row -->
+    <path d="M 0 36 C 0 16.1 16.1 0 36 0 L 264 0 C 283.9 0 300 16.1 300 36 L 300 80 L 0 80 Z" fill="#1f232b" />
+    
+    <!-- Header indicator dots -->
+    <circle cx="45" cy="40" r="10" fill="#ef4444" opacity="0.8" />
+    <circle cx="75" cy="40" r="10" fill="#f59e0b" opacity="0.8" />
+    <circle cx="105" cy="40" r="10" fill="#10b981" opacity="0.8" />
+
+    <!-- Grid lines -->
+    <line x1="90" y1="80" x2="90" y2="300" stroke="#2a2e37" stroke-width="4" />
+    <line x1="160" y1="80" x2="160" y2="300" stroke="#2a2e37" stroke-width="4" />
+    <line x1="230" y1="80" x2="230" y2="300" stroke="#2a2e37" stroke-width="4" />
+
+    <line x1="0" y1="135" x2="300" y2="135" stroke="#2a2e37" stroke-width="4" />
+    <line x1="0" y1="190" x2="300" y2="190" stroke="#2a2e37" stroke-width="4" />
+    <line x1="0" y1="245" x2="300" y2="245" stroke="#2a2e37" stroke-width="4" />
+
+    <!-- Completed habit checkmarks -->
+    <!-- Row 1 -->
+    <circle cx="125" cy="107" r="14" fill="#064e3b" stroke="#10b981" stroke-width="3" />
+    <path d="M 120 107 L 124 111 L 131 103" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <circle cx="195" cy="107" r="14" fill="#064e3b" stroke="#10b981" stroke-width="3" />
+    <path d="M 190 107 L 194 111 L 201 103" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <circle cx="265" cy="107" r="14" fill="#064e3b" stroke="#10b981" stroke-width="3" />
+    <path d="M 260 107 L 264 111 L 271 103" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- Row 2 -->
+    <circle cx="125" cy="162" r="14" fill="#064e3b" stroke="#10b981" stroke-width="3" />
+    <path d="M 120 162 L 124 166 L 131 158" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <circle cx="195" cy="162" r="14" fill="#064e3b" stroke="#10b981" stroke-width="3" />
+    <path d="M 190 162 L 194 166 L 201 158" stroke="#34d399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+
+    <!-- Large Foreground Badge Checkmark -->
+    <g transform="translate(160, 160)">
+      <circle cx="80" cy="80" r="64" fill="url(#emeraldGrad)" stroke="#111315" stroke-width="10" />
+      <path d="M 58 80 L 73 95 L 104 64" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    </g>
+  </g>
+</svg>
