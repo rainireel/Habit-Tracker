@@ -19,9 +19,16 @@ import { EditHabitModal } from './components/EditHabitModal';
 import { HabitGrid } from './components/HabitGrid';
 import { HabitManagerModal } from './components/HabitManagerModal';
 import { Header } from './components/Header';
+import { CloudSyncModal } from './components/CloudSyncModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { TopDashboard } from './components/TopDashboard';
 import { WellnessSection } from './components/WellnessSection';
+import {
+  getActiveSyncCode,
+  getStoredFirebaseConfig,
+  uploadTrackerData,
+  subscribeToTrackerCloud,
+} from './services/firebase';
 import { DEFAULT_CATEGORIES, DEFAULT_HABITS, MONTH_NAMES } from './constants/presets';
 import { CategoryItem, DayWellness, Habit, MonthData } from './types/tracker';
 import { evaluateAchievements } from './utils/achievementsUtils';
@@ -94,6 +101,30 @@ export default function App() {
   const [resetSuccessToast, setResetSuccessToast] = useState<boolean>(false);
   const resetToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Cross-Device Cloud Sync State
+  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState<boolean>(false);
+  const [syncCode, setSyncCode] = useState<string>(() => getActiveSyncCode());
+  const [hasFirebaseConfig, setHasFirebaseConfig] = useState<boolean>(() => !!getStoredFirebaseConfig());
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const isRemoteUpdatingRef = useRef<boolean>(false);
+  const uploadDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getCurrentTrackerData = () => ({
+    year,
+    availableYears,
+    activeMonth,
+    habits,
+    customCategories,
+    showCategoryBar,
+    showCategoryBadges,
+    isCompactNames,
+    monthsData,
+    accentColor,
+    streak,
+    xp,
+  });
+
   // Load from local storage
   useEffect(() => {
     try {
@@ -122,28 +153,88 @@ export default function App() {
     }
   }, []);
 
-  // Save to local storage on changes
+  // Real-time remote cloud subscription
   useEffect(() => {
+    const config = getStoredFirebaseConfig();
+    setHasFirebaseConfig(!!config);
+    if (!config || !syncCode) return;
+
+    const unsubscribe = subscribeToTrackerCloud(syncCode, (remoteData) => {
+      if (!remoteData) return;
+      isRemoteUpdatingRef.current = true;
+
+      try {
+        if (remoteData.habits?.length) setHabits(remoteData.habits);
+        if (remoteData.customCategories?.length) setCustomCategories(remoteData.customCategories);
+        if (remoteData.showCategoryBar !== undefined) setShowCategoryBar(remoteData.showCategoryBar);
+        if (remoteData.showCategoryBadges !== undefined) setShowCategoryBadges(remoteData.showCategoryBadges);
+        if (remoteData.monthsData) setMonthsData(remoteData.monthsData);
+        if (remoteData.isCompactNames !== undefined) setIsCompactNames(remoteData.isCompactNames);
+        if (remoteData.year) setYear(remoteData.year);
+        if (remoteData.availableYears && Array.isArray(remoteData.availableYears)) {
+          setAvailableYears(remoteData.availableYears);
+        }
+        if (remoteData.activeMonth !== undefined) setActiveMonth(remoteData.activeMonth);
+        if (remoteData.accentColor) setAccentColor(remoteData.accentColor);
+        if (remoteData.streak !== undefined) setStreak(remoteData.streak);
+        if (remoteData.xp !== undefined) setXp(remoteData.xp);
+
+        setLastSyncedAt(new Date());
+      } finally {
+        setTimeout(() => {
+          isRemoteUpdatingRef.current = false;
+        }, 300);
+      }
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [syncCode, hasFirebaseConfig]);
+
+  // Save to local storage & cloud on changes
+  useEffect(() => {
+    const stateToSave = {
+      year,
+      availableYears,
+      activeMonth,
+      habits,
+      customCategories,
+      showCategoryBar,
+      showCategoryBadges,
+      isCompactNames,
+      monthsData,
+      accentColor,
+      streak,
+      xp,
+    };
+
     try {
-      const stateToSave = {
-        year,
-        availableYears,
-        activeMonth,
-        habits,
-        customCategories,
-        showCategoryBar,
-        showCategoryBadges,
-        isCompactNames,
-        monthsData,
-        accentColor,
-        streak,
-        xp,
-      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     } catch {
       // storage quota or error
     }
-  }, [year, availableYears, activeMonth, habits, customCategories, showCategoryBar, showCategoryBadges, isCompactNames, monthsData, accentColor, streak, xp]);
+
+    // Do not reflect back incoming cloud updates
+    if (isRemoteUpdatingRef.current) return;
+
+    const config = getStoredFirebaseConfig();
+    if (!config) return;
+
+    if (uploadDebounceTimerRef.current) {
+      clearTimeout(uploadDebounceTimerRef.current);
+    }
+
+    uploadDebounceTimerRef.current = setTimeout(async () => {
+      setIsSyncing(true);
+      try {
+        const ok = await uploadTrackerData(syncCode, stateToSave);
+        if (ok) setLastSyncedAt(new Date());
+      } finally {
+        setIsSyncing(false);
+      }
+    }, 1000);
+  }, [year, availableYears, activeMonth, habits, customCategories, showCategoryBar, showCategoryBadges, isCompactNames, monthsData, accentColor, streak, xp, syncCode]);
 
   const loadInitialSampleData = (sampleYear: number, sampleMonth: number) => {
     const daysInThisMonth = getDaysInMonth(sampleYear, sampleMonth);
@@ -540,6 +631,9 @@ export default function App() {
         onOpenHabitsManager={() => setIsHabitManagerOpen(true)}
         onFillSampleData={handleFillSampleData}
         onResetMonth={handleResetMonth}
+        onOpenCloudSync={() => setIsCloudSyncOpen(true)}
+        isCloudSyncActive={hasFirebaseConfig}
+        isSyncing={isSyncing}
       />
 
       {/* 2. Main Content Canvas */}
@@ -757,6 +851,29 @@ export default function App() {
         availableYears={availableYears}
         onClose={() => setIsAddYearModalOpen(false)}
         onAddYear={handleAddYear}
+      />
+
+      {/* Cross-Device Cloud Sync Modal */}
+      <CloudSyncModal
+        isOpen={isCloudSyncOpen}
+        onClose={() => setIsCloudSyncOpen(false)}
+        accentColor={accentColor}
+        onSyncCodeChanged={(newCode) => {
+          setSyncCode(newCode);
+          setHasFirebaseConfig(!!getStoredFirebaseConfig());
+        }}
+        getCurrentTrackerData={getCurrentTrackerData}
+        onForcePullRemote={async () => {
+          setIsSyncing(true);
+          try {
+            await uploadTrackerData(syncCode, getCurrentTrackerData());
+            setLastSyncedAt(new Date());
+          } finally {
+            setIsSyncing(false);
+          }
+        }}
+        lastSyncedAt={lastSyncedAt}
+        isSyncing={isSyncing}
       />
 
       {/* Online / Offline Connectivity Toast & Status */}

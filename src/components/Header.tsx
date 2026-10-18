@@ -3,6 +3,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Cloud,
   Code,
   FileSpreadsheet,
   Flame,
@@ -39,6 +40,9 @@ interface HeaderProps {
   onOpenHabitsManager: () => void;
   onFillSampleData: () => void;
   onResetMonth: () => void;
+  onOpenCloudSync?: () => void;
+  isCloudSyncActive?: boolean;
+  isSyncing?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -58,6 +62,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHabitsManager,
   onFillSampleData,
   onResetMonth,
+  onOpenCloudSync,
+  isCloudSyncActive,
+  isSyncing,
 }) => {
   const currentMonthName = MONTH_NAMES[activeMonth];
   const level = Math.floor(xp / 100) + 1;
@@ -163,6 +170,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-[11px] font-mono">{isOnline ? 'Online' : 'Offline'}</span>
           </div>
 
+          {/* Cloud Sync Button */}
+          <button
+            onClick={onOpenCloudSync}
+            title={isCloudSyncActive ? 'Cloud Sync: Connected (real-time sync across devices)' : 'Cloud Sync: Setup required'}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 cursor-pointer min-h-[36px] ${
+              isCloudSyncActive
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60'
+                : 'bg-[#111315] border-[#2a2e37] text-slate-300 hover:text-white hover:bg-[#22252a]'
+            }`}
+          >
+            <Cloud size={14} className={isSyncing ? 'animate-pulse text-amber-400' : isCloudSyncActive ? 'text-emerald-400' : 'text-slate-400'} />
+            <span className="hidden sm:inline font-semibold">
+              {isSyncing ? 'Syncing...' : isCloudSyncActive ? 'Cloud Sync' : 'Sync Device'}
+            </span>
+          </button>
+
           {/* In-App PWA Install Button (Prompt & Standalone Awareness) */}
           <PWAInstallButton variant="header" />
 
@@ -236,6 +259,27 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Cloud Sync in Mobile Menu */}
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    onOpenCloudSync?.();
+                  }}
+                  className="w-full text-left px-3.5 py-2.5 text-xs text-emerald-300 hover:bg-[#252830] flex items-center justify-between gap-2 border-b border-[#2a2e37] font-semibold"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                      <Cloud size={13} className={isSyncing ? 'animate-pulse' : ''} />
+                    </div>
+                    <span>Cloud Sync</span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                    isCloudSyncActive ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' : 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                  }`}>
+                    {isCloudSyncActive ? 'Active' : 'Setup'}
+                  </span>
+                </button>
 
                 {/* PWA In-App Install in Mobile Menu */}
                 <PWAInstallButton
