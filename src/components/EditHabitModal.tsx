@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { CategoryItem, Habit, RepetitionType } from '../types/tracker';
+import { EmojiPickerToggle } from './EmojiPickerToggle';
 
 interface EditHabitModalProps {
   isOpen: boolean;
@@ -217,42 +218,28 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
 
         {/* Modal Body */}
         <form onSubmit={handleSave} className="p-3.5 sm:p-5 overflow-y-auto space-y-4 text-xs">
-          {/* 1. Habit Name & Emoji */}
+          {/* 1. Habit Name */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-semibold text-slate-300">
-              Habit Name &amp; Icon:
+              Habit Name:
             </label>
-            <div className="flex items-center gap-2">
-              <div className="relative group">
-                <span className="w-10 h-10 rounded-md bg-[#22252a] border border-[#333842] flex items-center justify-center text-xl cursor-pointer hover:border-emerald-500 transition-colors shadow-xs">
-                  {emoji}
-                </span>
-              </div>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Wake up at 05:00, Gym, Deep Work"
-                className="flex-1 bg-[#121316] border border-[#333842] rounded-md px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Wake up at 05:00, Gym, Deep Work"
+              className="w-full bg-[#121316] border border-[#333842] rounded-md px-3 py-2 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
 
-            {/* Quick Emoji Bar */}
-            <div className="flex flex-wrap items-center gap-1 pt-1">
-              {COMMON_EMOJIS.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => setEmoji(e)}
-                  className={`w-7 h-7 rounded flex items-center justify-center text-sm transition-transform hover:scale-110 ${
-                    emoji === e ? 'bg-emerald-600/40 border border-emerald-500' : 'hover:bg-slate-800'
-                  }`}
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
+          {/* 2. Habit Icon & Massive Emoji Picker with Minimalist Toggle */}
+          <div className="bg-[#1f2229] p-3 rounded-lg border border-[#333842]">
+            <EmojiPickerToggle
+              selectedEmoji={emoji}
+              onSelectEmoji={setEmoji}
+              label="Habit Icon & Emoji Library:"
+            />
           </div>
 
           {/* 2. Category Section with Inline Add & Customize */}

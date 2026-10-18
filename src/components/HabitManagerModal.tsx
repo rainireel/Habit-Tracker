@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_CATEGORIES, HABIT_PRESETS } from '../constants/presets';
 import { CategoryItem, Habit, HabitCategory, RepetitionType } from '../types/tracker';
+import { EmojiPickerToggle } from './EmojiPickerToggle';
 
 interface HabitManagerModalProps {
   isOpen: boolean;
@@ -279,22 +280,23 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
             <form onSubmit={handleAddHabit} className="bg-[#111315] border border-[#2a2e37] rounded-lg p-3.5 space-y-3">
               <label className="block text-slate-300 font-semibold">Add New Habit</label>
 
-              {/* Name and Emoji */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newHabitEmoji}
-                  onChange={(e) => setNewHabitEmoji(e.target.value)}
-                  maxLength={4}
-                  placeholder="⏰"
-                  className="w-12 text-center bg-[#181a20] border border-[#333842] rounded-md py-1.5 text-base focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                />
+              {/* Name */}
+              <div className="space-y-1">
                 <input
                   type="text"
                   value={newHabitName}
                   onChange={(e) => setNewHabitName(e.target.value)}
                   placeholder="e.g. Gym Strength, Read 20 Pages..."
-                  className="flex-1 bg-[#181a20] border border-[#333842] rounded-md px-3 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                  className="w-full bg-[#181a20] border border-[#333842] rounded-md px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                />
+              </div>
+
+              {/* Emoji Picker with Minimalist Toggle */}
+              <div className="bg-[#181a20] p-2.5 rounded-lg border border-[#333842]">
+                <EmojiPickerToggle
+                  selectedEmoji={newHabitEmoji}
+                  onSelectEmoji={setNewHabitEmoji}
+                  label="Habit Icon & Emoji Library:"
                 />
               </div>
 
@@ -458,28 +460,15 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 )}
               </div>
 
-              {/* Quick Emoji Bar & Add Button */}
-              <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#2a2e37]">
-                <div className="flex flex-wrap items-center gap-1">
-                  {COMMON_EMOJIS.slice(0, 10).map((emoji) => (
-                    <button
-                      type="button"
-                      key={emoji}
-                      onClick={() => setNewHabitEmoji(emoji)}
-                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-800 text-sm transition-colors"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-
+              {/* Add Button */}
+              <div className="flex items-center justify-end pt-2 border-t border-[#2a2e37]">
                 <button
                   type="submit"
                   disabled={!newHabitName.trim()}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-semibold rounded-md flex items-center gap-1 transition-colors"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold rounded-lg flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer text-xs shadow-xs"
                 >
                   <Plus size={14} />
-                  <span>Add Habit</span>
+                  <span>Add Habit to Tracker</span>
                 </button>
               </div>
             </form>
