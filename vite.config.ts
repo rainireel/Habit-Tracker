@@ -4,8 +4,12 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const isGithubPages = process.env.GITHUB_PAGES === 'true';
+  const basePath = isGithubPages ? '/Habit-Tracker/' : '/';
+
   return {
+    base: basePath,
     plugins: [
       react(),
       tailwindcss(),
@@ -21,30 +25,30 @@ export default defineConfig(() => {
           'pwa-maskable-512x512.png',
         ],
         manifest: {
-          id: '/',
+          id: basePath,
           name: 'Habit Tracker Pro',
           short_name: 'HabitTracker',
           description: 'Gamified aesthetic dark-mode habit tracker with offline support and Google Sheets export.',
           theme_color: '#111315',
           background_color: '#111315',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: basePath,
+          scope: basePath,
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: `${basePath}pwa-192x192.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.png',
+              src: `${basePath}pwa-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-maskable-512x512.png',
+              src: `${basePath}pwa-maskable-512x512.png`,
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
