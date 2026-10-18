@@ -29,9 +29,11 @@ import {
   getStoredFirebaseConfig,
   uploadTrackerData,
   subscribeToTrackerCloud,
+  getTrackerData,
   onAuthChange,
   checkRedirectResult,
 } from './services/firebase';
+import type { User } from 'firebase/auth';
 import { DEFAULT_CATEGORIES, DEFAULT_HABITS, MONTH_NAMES } from './constants/presets';
 import { CategoryItem, DayWellness, Habit, MonthData } from './types/tracker';
 import { evaluateAchievements } from './utils/achievementsUtils';
@@ -110,6 +112,7 @@ export default function App() {
   const [hasFirebaseConfig, setHasFirebaseConfig] = useState<boolean>(() => !!getStoredFirebaseConfig());
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const isRemoteUpdatingRef = useRef<boolean>(false);
   const uploadDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -130,20 +133,52 @@ export default function App() {
 
   // Listen for Google Auth state to link device automatically
   useEffect(() => {
-    checkRedirectResult().then((user) => {
+    const handleAuthUser = async (user: User | null) => {
+      setCurrentUser(user);
       if (user) {
-        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
+        const userSyncCode = `GOOGLE-${user.uid}`;
         setSyncCode(userSyncCode);
         setActiveSyncCode(userSyncCode);
+
+        // Fetch existing cloud data for this Google user before attempting any saves
+        isRemoteUpdatingRef.current = true;
+        try {
+          const remoteData = await getTrackerData(userSyncCode);
+          if (remoteData) {
+            if (remoteData.habits?.length) setHabits(remoteData.habits);
+            if (remoteData.customCategories?.length) setCustomCategories(remoteData.customCategories);
+            if (remoteData.showCategoryBar !== undefined) setShowCategoryBar(remoteData.showCategoryBar);
+            if (remoteData.showCategoryBadges !== undefined) setShowCategoryBadges(remoteData.showCategoryBadges);
+            if (remoteData.monthsData) setMonthsData(remoteData.monthsData);
+            if (remoteData.isCompactNames !== undefined) setIsCompactNames(remoteData.isCompactNames);
+            if (remoteData.year) setYear(remoteData.year);
+            if (remoteData.availableYears && Array.isArray(remoteData.availableYears)) {
+              setAvailableYears(remoteData.availableYears);
+            }
+            if (remoteData.activeMonth !== undefined) setActiveMonth(remoteData.activeMonth);
+            if (remoteData.accentColor) setAccentColor(remoteData.accentColor);
+            if (remoteData.streak !== undefined) setStreak(remoteData.streak);
+            if (remoteData.xp !== undefined) setXp(remoteData.xp);
+            setLastSyncedAt(new Date());
+          } else {
+            // First time this Google account connects: seed cloud document with current state
+            await uploadTrackerData(userSyncCode, getCurrentTrackerData());
+            setLastSyncedAt(new Date());
+          }
+        } finally {
+          setTimeout(() => {
+            isRemoteUpdatingRef.current = false;
+          }, 400);
+        }
       }
+    };
+
+    checkRedirectResult().then((user) => {
+      if (user) handleAuthUser(user);
     });
 
     const unsub = onAuthChange((user) => {
-      if (user) {
-        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
-        setSyncCode(userSyncCode);
-        setActiveSyncCode(userSyncCode);
-      }
+      handleAuthUser(user);
     });
 
     return () => {
@@ -648,6 +683,7 @@ export default function App() {
         xp={xp}
         soundEnabled={soundEnabled}
         accentColor={accentColor}
+        currentUser={currentUser}
         onSelectMonth={setActiveMonth}
         onChangeYear={handleChangeYear}
         onOpenAddYearModal={() => setIsAddYearModalOpen(true)}
@@ -884,6 +920,7 @@ export default function App() {
         isOpen={isCloudSyncOpen}
         onClose={() => setIsCloudSyncOpen(false)}
         accentColor={accentColor}
+        currentUser={currentUser}
         onSyncCodeChanged={(newCode) => {
           setSyncCode(newCode);
           setHasFirebaseConfig(!!getStoredFirebaseConfig());
@@ -892,7 +929,16 @@ export default function App() {
         onForcePullRemote={async () => {
           setIsSyncing(true);
           try {
-            await uploadTrackerData(syncCode, getCurrentTrackerData());
+            const remoteData = await getTrackerData(syncCode);
+            if (remoteData) {
+              if (remoteData.habits?.length) setHabits(remoteData.habits);
+              if (remoteData.customCategories?.length) setCustomCategories(remoteData.customCategories);
+              if (remoteData.monthsData) setMonthsData(remoteData.monthsData);
+              if (remoteData.streak !== undefined) setStreak(remoteData.streak);
+              if (remoteData.xp !== undefined) setXp(remoteData.xp);
+            } else {
+              await uploadTrackerData(syncCode, getCurrentTrackerData());
+            }
             setLastSyncedAt(new Date());
           } finally {
             setIsSyncing(false);

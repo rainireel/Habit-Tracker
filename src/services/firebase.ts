@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   onSnapshot,
   Firestore,
@@ -11,6 +12,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   User,
@@ -137,12 +140,39 @@ export function resetFirebaseInstances() {
   authInstance = null;
 }
 
+function normalizeSyncCode(code: string): string {
+  const trimmed = code.trim();
+  if (trimmed.startsWith('GOOGLE-') || trimmed.startsWith('USER-')) {
+    return trimmed;
+  }
+  return trimmed.toUpperCase();
+}
+
+export async function getTrackerData(syncCode: string): Promise<any | null> {
+  const instances = initFirebase();
+  if (!instances || !syncCode) return null;
+
+  const { db } = instances;
+  const cleanCode = normalizeSyncCode(syncCode);
+  const trackerDocRef = doc(db, 'trackers', cleanCode);
+
+  try {
+    const docSnap = await getDoc(trackerDocRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+  } catch (error) {
+    console.warn('Failed to fetch tracker from cloud:', error);
+  }
+  return null;
+}
+
 export async function uploadTrackerData(syncCode: string, trackerData: any): Promise<boolean> {
   const instances = initFirebase();
   if (!instances || !syncCode) return false;
 
   const { db } = instances;
-  const cleanCode = syncCode.trim().toUpperCase();
+  const cleanCode = normalizeSyncCode(syncCode);
   const trackerDocRef = doc(db, 'trackers', cleanCode);
 
   try {
@@ -170,7 +200,7 @@ export function subscribeToTrackerCloud(
   if (!instances || !syncCode) return null;
 
   const { db } = instances;
-  const cleanCode = syncCode.trim().toUpperCase();
+  const cleanCode = normalizeSyncCode(syncCode);
   const trackerDocRef = doc(db, 'trackers', cleanCode);
 
   const unsubscribe = onSnapshot(
@@ -178,7 +208,7 @@ export function subscribeToTrackerCloud(
     (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Avoid reverberating own changes if local was the author within 1 second
+        // Avoid reverberating own changes if local was the author within 1.5 seconds
         if (data.clientDeviceId === getClientDeviceId() && Date.now() - (data.lastUpdated || 0) < 1500) {
           return;
         }
@@ -195,22 +225,37 @@ export function subscribeToTrackerCloud(
 
 export async function loginWithGoogle(): Promise<User | null> {
   const instances = initFirebase();
-  if (!instances) return null;
+  if (!instances) throw new Error('Firebase is not configured');
   const { auth } = instances;
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
+  const isMobile =
+    typeof navigator !== 'undefined' &&
+    (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ||
+      (typeof window !== 'undefined' &&
+        window.matchMedia('(display-mode: standalone)').matches));
+
   try {
-    const res = await signInWithPopup(auth, provider);
-    return res.user;
+    if (isMobile) {
+      try {
+        const res = await signInWithPopup(auth, provider);
+        return res.user;
+      } catch (popupErr: any) {
+        console.warn('Mobile popup blocked or failed, falling back to redirect:', popupErr);
+        await signInWithRedirect(auth, provider);
+        return null;
+      }
+    } else {
+      const res = await signInWithPopup(auth, provider);
+      return res.user;
+    }
   } catch (err: any) {
-    // If popup is blocked (common on mobile browsers/PWAs), fall back to redirect
     if (
       err?.code === 'auth/popup-blocked' ||
-      err?.code === 'auth/cancelled-popup-request' ||
-      /android|iphone|ipad|mobile/i.test(navigator.userAgent)
+      err?.code === 'auth/cancelled-popup-request'
     ) {
-      console.warn('Popup blocked or mobile detected, switching to signInWithRedirect:', err);
+      console.warn('Popup blocked, attempting redirect:', err);
       await signInWithRedirect(auth, provider);
       return null;
     }

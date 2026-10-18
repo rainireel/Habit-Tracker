@@ -22,6 +22,7 @@ import {
 import { MONTH_NAMES } from '../constants/presets';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { PWAInstallButton } from './PWAInstallButton';
+import type { User } from 'firebase/auth';
 
 interface HeaderProps {
   year: number;
@@ -31,6 +32,7 @@ interface HeaderProps {
   xp: number;
   soundEnabled: boolean;
   accentColor: string;
+  currentUser?: User | null;
   onSelectMonth: (monthIndex: number) => void;
   onChangeYear: (year: number) => void;
   onOpenAddYearModal: () => void;
@@ -53,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   xp,
   soundEnabled,
   accentColor,
+  currentUser,
   onSelectMonth,
   onChangeYear,
   onOpenAddYearModal,
@@ -173,16 +176,47 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Cloud Sync Button */}
           <button
             onClick={onOpenCloudSync}
-            title={isCloudSyncActive ? 'Cloud Sync: Connected (real-time sync across devices)' : 'Cloud Sync: Setup required'}
+            title={
+              currentUser
+                ? `Cloud Sync: Linked to ${currentUser.displayName || currentUser.email}`
+                : isCloudSyncActive
+                ? 'Cloud Sync: Connected (real-time sync across devices)'
+                : 'Cloud Sync: Setup required'
+            }
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-95 cursor-pointer min-h-[36px] ${
-              isCloudSyncActive
+              currentUser
+                ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60 shadow-xs'
+                : isCloudSyncActive
                 ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60'
                 : 'bg-[#111315] border-[#2a2e37] text-slate-300 hover:text-white hover:bg-[#22252a]'
             }`}
           >
-            <Cloud size={14} className={isSyncing ? 'animate-pulse text-amber-400' : isCloudSyncActive ? 'text-emerald-400' : 'text-slate-400'} />
+            {currentUser?.photoURL ? (
+              <img
+                src={currentUser.photoURL}
+                alt="Google Avatar"
+                className="w-4 h-4 rounded-full border border-emerald-400 shrink-0 object-cover"
+              />
+            ) : (
+              <Cloud
+                size={14}
+                className={
+                  isSyncing
+                    ? 'animate-pulse text-amber-400'
+                    : isCloudSyncActive || currentUser
+                    ? 'text-emerald-400'
+                    : 'text-slate-400'
+                }
+              />
+            )}
             <span className="hidden sm:inline font-semibold">
-              {isSyncing ? 'Syncing...' : isCloudSyncActive ? 'Cloud Sync' : 'Sync Device'}
+              {isSyncing
+                ? 'Syncing...'
+                : currentUser
+                ? (currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'Linked')
+                : isCloudSyncActive
+                ? 'Cloud Sync'
+                : 'Sync Device'}
             </span>
           </button>
 
