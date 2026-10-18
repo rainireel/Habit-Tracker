@@ -567,30 +567,14 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 <span className="text-[10px] text-slate-400">e.g. Finances, Learning, Family</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newCatEmoji}
-                  onChange={(e) => setNewCatEmoji(e.target.value)}
-                  maxLength={4}
-                  placeholder="🏷️"
-                  className="w-12 text-center bg-[#181a20] border border-[#333842] rounded-md py-1.5 text-base focus:outline-none focus:ring-1 focus:ring-sky-400"
-                />
+              <div className="space-y-1">
                 <input
                   type="text"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="Category Name (e.g. Finances, Study, Art)..."
-                  className="flex-1 bg-[#181a20] border border-[#333842] rounded-md px-3 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  className="w-full bg-[#181a20] border border-[#333842] rounded-md px-3 py-2 text-slate-200 text-sm focus:outline-none focus:ring-1 focus:ring-sky-400"
                 />
-                <button
-                  type="submit"
-                  disabled={!newCatName.trim()}
-                  className="px-4 py-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-semibold rounded-md flex items-center gap-1 transition-colors"
-                >
-                  <Plus size={14} />
-                  <span>Add Category</span>
-                </button>
               </div>
 
               {categoryError && (
@@ -599,19 +583,25 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 </div>
               )}
 
-              {/* Quick Emojis for categories */}
-              <div className="flex flex-wrap items-center gap-1 pt-1">
-                <span className="text-[10px] text-slate-500 mr-1">Suggested Emojis:</span>
-                {CATEGORY_EMOJIS.map((emoji) => (
-                  <button
-                    type="button"
-                    key={emoji}
-                    onClick={() => setNewCatEmoji(emoji)}
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-800 text-sm transition-colors"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+              {/* Massive Emoji Picker with Minimalist Toggle for Category */}
+              <div className="bg-[#181a20] p-2.5 rounded-lg border border-[#333842]">
+                <EmojiPickerToggle
+                  selectedEmoji={newCatEmoji}
+                  onSelectEmoji={setNewCatEmoji}
+                  label="Category Icon & Emoji Library:"
+                  quickPicks={CATEGORY_EMOJIS}
+                />
+              </div>
+
+              <div className="flex items-center justify-end pt-2 border-t border-[#2a2e37]">
+                <button
+                  type="submit"
+                  disabled={!newCatName.trim()}
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-bold rounded-lg flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer text-xs shadow-xs"
+                >
+                  <Plus size={14} />
+                  <span>Add Category</span>
+                </button>
               </div>
             </form>
 

@@ -291,44 +291,30 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
                 </div>
 
                 <div className="flex gap-2">
-                  <div className="relative">
-                    <span className="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-base">
-                      {newCatEmoji}
-                    </span>
-                  </div>
                   <input
                     type="text"
                     value={newCatName}
                     onChange={(e) => setNewCatName(e.target.value)}
                     placeholder="Category name (e.g., Reading, Finances)"
-                    className="flex-1 bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-white text-xs focus:outline-none focus:border-sky-400"
+                    className="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-xs focus:outline-none focus:border-sky-400"
                   />
                   <button
                     type="button"
                     onClick={handleCreateNewCategory}
                     disabled={!newCatName.trim()}
-                    className="px-3 py-1 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-bold rounded text-xs transition-colors"
+                    className="px-4 py-1.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-bold rounded text-xs transition-colors shrink-0"
                   >
-                    Save
+                    Save Category
                   </button>
                 </div>
 
-                {/* Emoji choices */}
-                <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-[10px] text-slate-400 mr-1">Icon:</span>
-                  {CATEGORY_EMOJIS.map((em) => (
-                    <button
-                      key={em}
-                      type="button"
-                      onClick={() => setNewCatEmoji(em)}
-                      className={`w-6 h-6 rounded flex items-center justify-center text-xs ${
-                        newCatEmoji === em ? 'bg-sky-600/40 border border-sky-400' : 'hover:bg-slate-800'
-                      }`}
-                    >
-                      {em}
-                    </button>
-                  ))}
-                </div>
+                {/* Massive Emoji Picker with Minimalist Toggle for Category */}
+                <EmojiPickerToggle
+                  selectedEmoji={newCatEmoji}
+                  onSelectEmoji={setNewCatEmoji}
+                  label="Category Icon & Emoji Library:"
+                  quickPicks={CATEGORY_EMOJIS}
+                />
 
                 {/* Color choices */}
                 <div className="flex items-center gap-1.5">

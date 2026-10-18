@@ -11,6 +11,7 @@ interface EmojiPickerToggleProps {
   onSelectEmoji: (emoji: string) => void;
   accentColor?: string;
   label?: string;
+  quickPicks?: string[];
 }
 
 export const EmojiPickerToggle: React.FC<EmojiPickerToggleProps> = ({
@@ -18,10 +19,12 @@ export const EmojiPickerToggle: React.FC<EmojiPickerToggleProps> = ({
   onSelectEmoji,
   accentColor = '#4ade80',
   label = 'Select Icon',
+  quickPicks,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const quickList = quickPicks || QUICK_POPULAR_EMOJIS;
 
   // Filter emojis based on active category & search query
   const filteredEmojis = useMemo(() => {
@@ -90,7 +93,7 @@ export const EmojiPickerToggle: React.FC<EmojiPickerToggleProps> = ({
 
         {/* Quick Popular Picks Bar (Minimalist) */}
         <div className="flex-1 flex flex-wrap items-center gap-1 bg-[#14161b] border border-[#2a2e37] p-1 rounded-lg overflow-x-auto custom-scrollbar">
-          {QUICK_POPULAR_EMOJIS.map((em) => (
+          {quickList.map((em) => (
             <button
               key={em}
               type="button"
