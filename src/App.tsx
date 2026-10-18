@@ -297,6 +297,27 @@ export default function App() {
     }, 1000);
   }, [year, availableYears, activeMonth, habits, customCategories, showCategoryBar, showCategoryBadges, isCompactNames, monthsData, accentColor, streak, xp, syncCode]);
 
+  // When coming back online, immediately sync all offline changes to cloud
+  useEffect(() => {
+    const handleReconnected = async () => {
+      const config = getStoredFirebaseConfig();
+      if (!config || !syncCode) return;
+      setIsSyncing(true);
+      try {
+        const currentData = getCurrentTrackerData();
+        const ok = await uploadTrackerData(syncCode, currentData);
+        if (ok) setLastSyncedAt(new Date());
+      } catch (err) {
+        console.warn('Reconnection auto-sync failed:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    window.addEventListener('online', handleReconnected);
+    return () => window.removeEventListener('online', handleReconnected);
+  }, [syncCode, year, availableYears, activeMonth, habits, customCategories, showCategoryBar, showCategoryBadges, isCompactNames, monthsData, accentColor, streak, xp]);
+
   const loadInitialSampleData = (sampleYear: number, sampleMonth: number) => {
     const daysInThisMonth = getDaysInMonth(sampleYear, sampleMonth);
     const sampleChecks: Record<string, Record<number, boolean>> = {};
