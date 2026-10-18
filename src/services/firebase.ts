@@ -198,12 +198,36 @@ export async function loginWithGoogle(): Promise<User | null> {
   if (!instances) return null;
   const { auth } = instances;
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+
   try {
     const res = await signInWithPopup(auth, provider);
     return res.user;
-  } catch (err) {
+  } catch (err: any) {
+    // If popup is blocked (common on mobile browsers/PWAs), fall back to redirect
+    if (
+      err?.code === 'auth/popup-blocked' ||
+      err?.code === 'auth/cancelled-popup-request' ||
+      /android|iphone|ipad|mobile/i.test(navigator.userAgent)
+    ) {
+      console.warn('Popup blocked or mobile detected, switching to signInWithRedirect:', err);
+      await signInWithRedirect(auth, provider);
+      return null;
+    }
     console.error('Google Sign-in failed:', err);
     throw err;
+  }
+}
+
+export async function checkRedirectResult(): Promise<User | null> {
+  const instances = initFirebase();
+  if (!instances) return null;
+  try {
+    const res = await getRedirectResult(instances.auth);
+    return res?.user || null;
+  } catch (err) {
+    console.warn('No redirect result or error:', err);
+    return null;
   }
 }
 

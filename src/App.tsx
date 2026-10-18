@@ -25,9 +25,12 @@ import { TopDashboard } from './components/TopDashboard';
 import { WellnessSection } from './components/WellnessSection';
 import {
   getActiveSyncCode,
+  setActiveSyncCode,
   getStoredFirebaseConfig,
   uploadTrackerData,
   subscribeToTrackerCloud,
+  onAuthChange,
+  checkRedirectResult,
 } from './services/firebase';
 import { DEFAULT_CATEGORIES, DEFAULT_HABITS, MONTH_NAMES } from './constants/presets';
 import { CategoryItem, DayWellness, Habit, MonthData } from './types/tracker';
@@ -124,6 +127,29 @@ export default function App() {
     streak,
     xp,
   });
+
+  // Listen for Google Auth state to link device automatically
+  useEffect(() => {
+    checkRedirectResult().then((user) => {
+      if (user) {
+        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
+        setSyncCode(userSyncCode);
+        setActiveSyncCode(userSyncCode);
+      }
+    });
+
+    const unsub = onAuthChange((user) => {
+      if (user) {
+        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
+        setSyncCode(userSyncCode);
+        setActiveSyncCode(userSyncCode);
+      }
+    });
+
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
 
   // Load from local storage
   useEffect(() => {

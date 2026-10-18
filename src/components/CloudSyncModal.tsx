@@ -31,6 +31,7 @@ import {
   loginWithGoogle,
   logoutGoogle,
   onAuthChange,
+  checkRedirectResult,
   FirebaseConfig,
 } from '../services/firebase';
 import { User } from 'firebase/auth';
@@ -80,8 +81,24 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
+    checkRedirectResult().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
+        setSyncCode(userSyncCode);
+        setActiveSyncCode(userSyncCode);
+        onSyncCodeChanged(userSyncCode);
+      }
+    });
+
     const unsub = onAuthChange((user) => {
       setCurrentUser(user);
+      if (user) {
+        const userSyncCode = `USER-${user.uid.substring(0, 8).toUpperCase()}`;
+        setSyncCode(userSyncCode);
+        setActiveSyncCode(userSyncCode);
+        onSyncCodeChanged(userSyncCode);
+      }
     });
     return () => {
       if (unsub) unsub();
