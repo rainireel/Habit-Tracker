@@ -78,6 +78,7 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
   // Editing existing category
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
+  const [editingCatEmoji, setEditingCatEmoji] = useState('📌');
 
   // Reset state when opened with a new habit
   React.useEffect(() => {
@@ -171,6 +172,7 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
   const handleStartRenameCategory = (cat: CategoryItem) => {
     setEditingCatId(cat.id);
     setEditingCatName(cat.name);
+    setEditingCatEmoji(cat.emoji || '📌');
   };
 
   const handleSaveRenameCategory = (catId: string, oldName: string) => {
@@ -181,7 +183,7 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
     }
 
     const updated = customCategories.map((c) =>
-      c.id === catId ? { ...c, name: trimmed } : c
+      c.id === catId ? { ...c, name: trimmed, emoji: editingCatEmoji } : c
     );
     onUpdateCategories(updated);
     if (category === oldName) {
@@ -335,7 +337,7 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
 
             {/* Category Customize / Edit Mode */}
             {showCategoryManager && (
-              <div className="bg-[#14161b] p-3 rounded-md border border-slate-700 space-y-2 animate-fadeIn max-h-48 overflow-y-auto">
+              <div className="bg-[#14161b] p-3 rounded-md border border-slate-700 space-y-2 animate-fadeIn max-h-96 overflow-y-auto custom-scrollbar">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">
                   Manage Existing Categories
                 </span>
@@ -345,28 +347,37 @@ export const EditHabitModal: React.FC<EditHabitModalProps> = ({
                     className="flex items-center justify-between gap-2 bg-[#1b1e24] px-2.5 py-1.5 rounded border border-slate-800"
                   >
                     {editingCatId === cat.id ? (
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <span>{cat.emoji}</span>
-                        <input
-                          type="text"
-                          value={editingCatName}
-                          onChange={(e) => setEditingCatName(e.target.value)}
-                          className="bg-slate-900 border border-sky-400 rounded px-1.5 py-0.5 text-xs text-white flex-1"
+                      <div className="flex flex-col gap-2 flex-1 py-1">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={editingCatName}
+                            onChange={(e) => setEditingCatName(e.target.value)}
+                            className="bg-slate-900 border border-sky-400 rounded px-2 py-1 text-xs text-white flex-1 focus:outline-none"
+                            placeholder="Category name..."
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveRenameCategory(cat.id, cat.name)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold flex items-center gap-1"
+                          >
+                            <Check size={12} />
+                            <span>Save</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCatId(null)}
+                            className="p-1 text-slate-400 hover:text-white"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                        <EmojiPickerToggle
+                          selectedEmoji={editingCatEmoji}
+                          onSelectEmoji={setEditingCatEmoji}
+                          label="Category Icon & Library:"
+                          quickPicks={CATEGORY_EMOJIS}
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveRenameCategory(cat.id, cat.name)}
-                          className="p-1 bg-emerald-600 text-white rounded text-[10px] font-bold"
-                        >
-                          <Check size={11} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingCatId(null)}
-                          className="p-1 text-slate-400 hover:text-white"
-                        >
-                          <X size={11} />
-                        </button>
                       </div>
                     ) : (
                       <>

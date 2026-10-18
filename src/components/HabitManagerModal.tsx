@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
+  Check,
+  Edit2,
   Folder,
   Palette,
   Plus,
@@ -66,6 +68,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   const [newCatName, setNewCatName] = useState('');
   const [newCatEmoji, setNewCatEmoji] = useState('📌');
   const [categoryError, setCategoryError] = useState<string | null>(null);
+
+  // Edit Existing Category state
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editingCatName, setEditingCatName] = useState('');
+  const [editingCatEmoji, setEditingCatEmoji] = useState('📌');
 
   if (!isOpen) return null;
 
@@ -150,6 +157,36 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     setHabitsList((prev) =>
       prev.map((h) => (h.category === catName ? { ...h, category: fallbackCategory } : h))
     );
+  };
+
+  const handleStartEditCategory = (cat: CategoryItem) => {
+    setEditingCatId(cat.id);
+    setEditingCatName(cat.name);
+    setEditingCatEmoji(cat.emoji || '📌');
+  };
+
+  const handleSaveEditCategory = (catId: string, oldName: string) => {
+    const trimmed = editingCatName.trim();
+    if (!trimmed) {
+      setEditingCatId(null);
+      return;
+    }
+
+    const updated = categoriesList.map((c) =>
+      c.id === catId ? { ...c, name: trimmed, emoji: editingCatEmoji } : c
+    );
+    setCategoriesList(updated);
+    onUpdateCategories(updated);
+
+    if (oldName !== trimmed) {
+      setHabitsList((prev) =>
+        prev.map((h) => (h.category === oldName ? { ...h, category: trimmed } : h))
+      );
+      if (selectedCategory === oldName) {
+        setSelectedCategory(trimmed);
+      }
+    }
+    setEditingCatId(null);
   };
 
   const handleMove = (index: number, direction: 'up' | 'down') => {
@@ -620,32 +657,79 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                       key={cat.id}
                       className="bg-[#181a20] border border-[#2a2e37] rounded-lg px-3.5 py-2.5 flex items-center justify-between gap-3 hover:border-slate-600 transition-colors"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xl select-none">{cat.emoji}</span>
-                        <div>
-                          <span className="font-semibold text-slate-100 text-xs">{cat.name}</span>
-                          <span className="text-[10px] text-slate-400 ml-2">
-                            ({habitsInCat} {habitsInCat === 1 ? 'habit' : 'habits'})
-                          </span>
+                      {editingCatId === cat.id ? (
+                        <div className="flex flex-col gap-2.5 w-full py-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingCatName}
+                              onChange={(e) => setEditingCatName(e.target.value)}
+                              className="flex-1 bg-[#121316] border border-sky-400 rounded-md px-3 py-1.5 text-xs text-white focus:outline-none"
+                              placeholder="Category name..."
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEditCategory(cat.id, cat.name)}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                            >
+                              <Check size={12} />
+                              <span>Save</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingCatId(null)}
+                              className="p-1.5 text-slate-400 hover:text-white cursor-pointer"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                          <div className="bg-[#14161b] p-2 rounded-md border border-[#2a2e37]">
+                            <EmojiPickerToggle
+                              selectedEmoji={editingCatEmoji}
+                              onSelectEmoji={setEditingCatEmoji}
+                              label="Edit Category Icon & Library:"
+                              quickPicks={CATEGORY_EMOJIS}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl select-none">{cat.emoji}</span>
+                            <div>
+                              <span className="font-semibold text-slate-100 text-xs">{cat.name}</span>
+                              <span className="text-[10px] text-slate-400 ml-2">
+                                ({habitsInCat} {habitsInCat === 1 ? 'habit' : 'habits'})
+                              </span>
+                            </div>
+                          </div>
 
-                      <div className="flex items-center gap-2">
-                        {cat.isCustom ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                            title="Delete Custom Category"
-                            className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-rose-950/40 transition-colors"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        ) : (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-500 border border-slate-700/60">
-                            Default
-                          </span>
-                        )}
-                      </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditCategory(cat)}
+                              title="Edit Category & Emoji"
+                              className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-700/60 transition-colors cursor-pointer"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            {cat.isCustom ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                                title="Delete Custom Category"
+                                className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-rose-950/40 transition-colors cursor-pointer"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            ) : (
+                              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-500 border border-slate-700/60">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}
